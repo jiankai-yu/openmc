@@ -18,6 +18,8 @@ from .data import K_BOLTZMANN
 from .neutron import IncidentNeutron
 from .resonance import ResonanceRange
 
+WMP_VERSION_MINOR = 3 # 1 for implicit capture, 2 for explicit capture, 3 for more channels 
+WMP_VERSION = (WMP_VERSION_MAJOR, WMP_VERSION_MINOR)
 
 # Constants that determine which value to access
 _MP_EA = 0       # Pole
@@ -25,12 +27,18 @@ _MP_EA = 0       # Pole
 # Residue indices
 _MP_RS = 1       # Residue scattering
 _MP_RA = 2       # Residue absorption
-_MP_RF = 3       # Residue fission
+_MP_RC = 3       # Residue capture MT=102
+_MP_RP = 4       # Residue n, proton MT=103
+_MP_RL = 5       # Residue n, alpha MT=107
+_MP_RF = 6       # Residue fission
 
 # Polynomial fit indices
 _FIT_S = 0       # Scattering
 _FIT_A = 1       # Absorption
-_FIT_F = 2       # Fission
+_FIT_C = 2       # Capture
+_FIT_P = 3       # proton
+_FIT_L = 4       # alpha
+_FIT_F = 5       # Fission
 
 # Upper temperature limit (K)
 TEMPERATURE_LIMIT = 3000
@@ -461,7 +469,20 @@ def vectfit_nuclide(endf_file, njoy_error=5e-4, vf_pieces=None,
         absorption_xs = nuc_ce[27].xs['0K'](energy)
     except KeyError:
         absorption_xs = np.zeros_like(total_xs)
-
+    
+    try:
+        capture_xs = nuc_ce[102].xs['0K'](energy)
+    except KeyError:
+        capture_xs = np.zeros_like(total_xs)
+    try:
+        proton_xs = nuc_ce[103].xs['0K'](energy)
+    except KeyError:
+        proton_xs = np.zeros_like(total_xs) 
+    try:
+        alpha_xs = nuc_ce[107].xs['0K'](energy)
+    except KeyError:
+        alpha_xs = np.zeros_like(total_xs)
+    
     fissionable = False
     try:
         fission_xs = nuc_ce[18].xs['0K'](energy)
@@ -470,12 +491,29 @@ def vectfit_nuclide(endf_file, njoy_error=5e-4, vf_pieces=None,
         pass
 
     # make vectors
-    if fissionable:
-        ce_xs = np.vstack((elastic_xs, absorption_xs, fission_xs))
-        mts = [2, 27, 18]
+    if WMP_VERSION_MINOR == 1:
+        if fissionable:
+            ce_xs = np.vstack((elastic_xs, absorption_xs, capture_xs, proton_xs, alpha_xs, fission_xs))
+            mts = [2, 27, 18]
+        else:
+            ce_xs = np.vstack((elastic_xs, absorption_xs, capture_xs, proton_xs, alpha_xs))
+            mts = [2, 27]
+    elif WMP_VERSION_MINOR == 2:
+        if fissionable:
+            ce_xs = np.vstack((elastic_xs, absorption_xs, capture_xs, proton_xs, alpha_xs, fission_xs))
+            mts = [2, 27, 102, 18]
+        else:
+            ce_xs = np.vstack((elastic_xs, absorption_xs, capture_xs, proton_xs, alpha_xs))
+            mts = [2, 27, 102]
+    elif WMP_VERSION_MINOR == 3:
+        if fissionable:
+        ce_xs = np.vstack((elastic_xs, absorption_xs, capture_xs, proton_xs, alpha_xs, fission_xs))
+        mts = [2, 27, 102, 103, 107, 18]
     else:
-        ce_xs = np.vstack((elastic_xs, absorption_xs))
-        mts = [2, 27]
+        ce_xs = np.vstack((elastic_xs, absorption_xs, capture_xs, proton_xs, alpha_xs))
+        mts = [2, 27, 102, 103, 107] 
+    else:
+        raise ValueError('WMP_VERSION_MINOR is unknown.')
 
     if log:
         print("  MTs: {}".format(mts))
@@ -806,7 +844,12 @@ class WindowedMultipole(EqualityMixin):
 
     @property
     def fissionable(self):
-        return self.data.shape[1] == 4
+        if WMP_VERSION_MINOR == 1:
+            return self.data.shape[1] == 4
+        if WMP_VERSION_MINOR == 2:
+            return self.data.shape[1] == 5
+        if WMP_VERSION_MINOR == 3:
+            return self.data.shape[1] == 7   
 
     @property
     def n_poles(self):
@@ -891,11 +934,24 @@ class WindowedMultipole(EqualityMixin):
             cv.check_type('data', data, np.ndarray)
             if len(data.shape) != 2:
                 raise ValueError('Multipole data arrays must be 2D')
-            if data.shape[1] not in (3, 4):
-                raise ValueError(
-                     'data.shape[1] must be 3 or 4. One value for the pole.'
-                     ' One each for the scattering and absorption residues. '
-                     'Possibly one more for a fission residue.')
+            if WMP_VERSION_MINOR == 1:
+                if data.shape[1] not in (3, 4): # old version of wmp 
+                    raise ValueError(
+                         'data.shape[1] must be 3 or 4. One value for the pole.'
+                         ' One each for the scattering and absorption residues. '
+                         'Possibly one more for a fission residue.')
+            if WMP_VERSION_MINOR == 2:
+                if data.shape[1] not in (4, 5): # new version of wmp 
+                    raise ValueError(
+                         'data.shape[1] must be 4 or 5. One value for the pole.'
+                         ' One each for the scattering and absorption residues. '
+                         'Possibly one more for a fission residue.')
+            if WMP_VERSION_MINOR == 3:
+                if data.shape[1] not in (6, 7): # old version of wmp 
+                    raise ValueError(
+                         'data.shape[1] must be 6 or 7. One value for the pole.'
+                         ' One each for the scattering and absorption residues. '
+                         'Possibly one more for a fission residue.')
             if not np.issubdtype(data.dtype, np.complexfloating):
                 raise TypeError('Multipole data arrays must be complex dtype')
         self._data = data
@@ -928,9 +984,18 @@ class WindowedMultipole(EqualityMixin):
             cv.check_type('curvefit', curvefit, np.ndarray)
             if len(curvefit.shape) != 3:
                 raise ValueError('Multipole curvefit arrays must be 3D')
-            if curvefit.shape[2] not in (2, 3):  # sig_s, sig_a (maybe sig_f)
-                raise ValueError('The third dimension of multipole curvefit'
-                                 ' arrays must have a length of 2 or 3')
+            if WMP_VERSION_MINOR == 1:
+                if curvefit.shape[2] not in (2, 3):  # sig_s, sig_a, (maybe sig_f)
+                    raise ValueError('The third dimension of multipole curvefit'
+                                     ' arrays must have a length of 3 or 4')
+            if WMP_VERSION_MINOR == 2:
+                if curvefit.shape[2] not in (3, 4):  # sig_s, sig_a, sig_c, (maybe sig_f)
+                    raise ValueError('The third dimension of multipole curvefit'
+                                     ' arrays must have a length of 3 or 4')
+            if WMP_VERSION_MINOR == 3:
+                if curvefit.shape[2] not in (5, 6):  # sig_s, sig_a, sig_c, sig_p, sig_l (maybe sig_f)
+                    raise ValueError('The third dimension of multipole curvefit'
+                                     ' arrays must have a length of 3 or 4')
             if not np.issubdtype(curvefit.dtype, np.floating):
                 raise TypeError('Multipole curvefit arrays must be float dtype')
         self._curvefit = curvefit
@@ -981,6 +1046,8 @@ class WindowedMultipole(EqualityMixin):
         out = cls(name)
 
         # Read scalars.
+        if hasattr(group, 'version'):
+            out.version_minor = group['version']
 
         out.spacing = group['spacing'][()]
         out.sqrtAWR = group['sqrtAWR'][()]
@@ -1182,6 +1249,9 @@ class WindowedMultipole(EqualityMixin):
         # Initialize the ouptut cross sections.
         sig_s = 0.0
         sig_a = 0.0
+        sig_c = 0.0
+        sig_p = 0.0
+        sig_l = 0.0
         sig_f = 0.0
 
         # ======================================================================
@@ -1197,16 +1267,45 @@ class WindowedMultipole(EqualityMixin):
                           * broadened_polynomials[i_poly])
                 sig_a += (self.curvefit[i_window, i_poly, _FIT_A]
                           * broadened_polynomials[i_poly])
+                if WMP_VERSION_MINOR == 2:
+                    sig_c += (self.curvefit[i_window, i_poly, _FIT_C]
+                          * broadened_polynomials[i_poly])
+                if WMP_VERSION_MINOR == 3:
+                    sig_c += (self.curvefit[i_window, i_poly, _FIT_C]
+                          * broadened_polynomials[i_poly])
+                    sig_p += (self.curvefit[i_window, i_poly, _FIT_P]
+                          * broadened_polynomials[i_poly])
+                    sig_l += (self.curvefit[i_window, i_poly, _FIT_L]
+                          * broadened_polynomials[i_poly])
                 if self.fissionable:
-                    sig_f += (self.curvefit[i_window, i_poly, _FIT_F]
+                    if WMP_VERSION_MINOR == 1:
+                        sig_f += (self.curvefit[i_window, i_poly, _FIT_F - 3]
                               * broadened_polynomials[i_poly])
+                    if WMP_VERSION_MINOR == 2:
+                        sig_f += (self.curvefit[i_window, i_poly, _FIT_F - 2]
+                              * broadened_polynomials[i_poly])
+                    if WMP_VERSION_MINOR == 3:
+                        sig_f += (self.curvefit[i_window, i_poly, _FIT_F]
+                              * broadened_polynomials[i_poly])  
         else:
             temp = invE
             for i_poly in range(self.fit_order + 1):
                 sig_s += self.curvefit[i_window, i_poly, _FIT_S] * temp
                 sig_a += self.curvefit[i_window, i_poly, _FIT_A] * temp
+                if WMP_VERSION_MINOR == 2:
+                    sig_c += self.curvefit[i_window, i_poly, _FIT_C] * temp
+                if WMP_VERSION_MINOR == 3:
+                    sig_c += self.curvefit[i_window, i_poly, _FIT_C] * temp
+                    sig_p += self.curvefit[i_window, i_poly, _FIT_P] * temp
+                    sig_l += self.curvefit[i_window, i_poly, _FIT_L] * temp                    
                 if self.fissionable:
-                    sig_f += self.curvefit[i_window, i_poly, _FIT_F] * temp
+                    if WMP_VERSION_MINOR == 1:
+                        sig_f += self.curvefit[i_window, i_poly, _FIT_F - 3] * temp
+                    if WMP_VERSION_MINOR == 2:
+                        sig_f += self.curvefit[i_window, i_poly, _FIT_F - 2] * temp
+                    if WMP_VERSION_MINOR == 3:
+                        sig_f += self.curvefit[i_window, i_poly, _FIT_F] * temp    
+                    
                 temp *= sqrtE
 
         # ======================================================================
@@ -1219,8 +1318,19 @@ class WindowedMultipole(EqualityMixin):
                 c_temp = psi_chi / E
                 sig_s += (self.data[i_pole, _MP_RS] * c_temp).real
                 sig_a += (self.data[i_pole, _MP_RA] * c_temp).real
+                if WMP_VERSION_MINOR == 2:
+                    sig_c += (self.data[i_pole, _MP_RC] * c_temp).real
+                if WMP_VERSION_MINOR == 3:
+                    sig_c += (self.data[i_pole, _MP_RC] * c_temp).real
+                    sig_p += (self.data[i_pole, _MP_RP] * c_temp).real
+                    sig_l += (self.data[i_pole, _MP_RL] * c_temp).real                    
                 if self.fissionable:
-                    sig_f += (self.data[i_pole, _MP_RF] * c_temp).real
+                    if WMP_VERSION_MINOR == 1:
+                        sig_f += (self.data[i_pole, _MP_RF - 3] * c_temp).real
+                    if WMP_VERSION_MINOR == 2:
+                        sig_f += (self.data[i_pole, _MP_RF - 2] * c_temp).real
+                    if WMP_VERSION_MINOR == 3:
+                        sig_f += (self.data[i_pole, _MP_RF] * c_temp).real 
 
         else:
             # At temperature, use Faddeeva function-based form.
@@ -1230,10 +1340,24 @@ class WindowedMultipole(EqualityMixin):
                 w_val = _faddeeva(Z) * dopp * invE * sqrt(pi)
                 sig_s += (self.data[i_pole, _MP_RS] * w_val).real
                 sig_a += (self.data[i_pole, _MP_RA] * w_val).real
+                if WMP_VERSION_MINOR == 2:
+                    sig_c += (self.data[i_pole, _MP_RC] * w_val).real
+                if WMP_VERSION_MINOR == 3:
+                    sig_c += (self.data[i_pole, _MP_RC] * w_val).real 
+                    sig_p += (self.data[i_pole, _MP_RP] * w_val).real 
+                    sig_l += (self.data[i_pole, _MP_RL] * w_val).real                     
                 if self.fissionable:
-                    sig_f += (self.data[i_pole, _MP_RF] * w_val).real
+                    if WMP_VERSION_MINOR == 1:
+                        sig_f += (self.data[i_pole, _MP_RF - 3] * w_val).real
+                    if WMP_VERSION_MINOR == 2:
+                        sig_f += (self.data[i_pole, _MP_RF - 2] * w_val).real
+                    if WMP_VERSION_MINOR == 3:
+                        sig_f += (self.data[i_pole, _MP_RF] * w_val).real
+        
+        if WMP_VERSION_MINOR == 1:
+            sig_c = sig_a - sig_f;
 
-        return sig_s, sig_a, sig_f
+        return sig_s, sig_a, sig_c, sig_p, sig_l, sig_f
 
     def __call__(self, E, T):
         """Compute scattering, absorption, and fission cross sections.

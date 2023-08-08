@@ -507,11 +507,11 @@ def vectfit_nuclide(endf_file, njoy_error=5e-4, vf_pieces=None,
             mts = [2, 27, 102]
     elif WMP_VERSION_MINOR == 3:
         if fissionable:
-        ce_xs = np.vstack((elastic_xs, absorption_xs, capture_xs, proton_xs, alpha_xs, fission_xs))
-        mts = [2, 27, 102, 103, 107, 18]
-    else:
-        ce_xs = np.vstack((elastic_xs, absorption_xs, capture_xs, proton_xs, alpha_xs))
-        mts = [2, 27, 102, 103, 107] 
+            ce_xs = np.vstack((elastic_xs, absorption_xs, capture_xs, proton_xs, alpha_xs, fission_xs))
+            mts = [2, 27, 102, 103, 107, 18]
+        else:
+            ce_xs = np.vstack((elastic_xs, absorption_xs, capture_xs, proton_xs, alpha_xs))
+            mts = [2, 27, 102, 103, 107] 
     else:
         raise ValueError('WMP_VERSION_MINOR is unknown.')
 

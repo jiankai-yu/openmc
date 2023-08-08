@@ -22,7 +22,7 @@ constexpr int MP_EA {0}; // Pole
 constexpr int MP_RS {1}; // Residue scattering
 constexpr int MP_RA {2}; // Residue absorption
 constexpr int MP_RC {3}; // Residue capture
-constexpr int MP_RP {4}: // Residue proton
+constexpr int MP_RP {4}; // Residue proton
 constexpr int MP_RL {5}; // Residue alpha
 constexpr int MP_RF {6}; // Residue fission
 
@@ -87,7 +87,11 @@ public:
   xt::xtensor<double, 3>
     curvefit_; // Curve fit coefficients (window, poly order, reaction)
   xt::xtensor<std::complex<double>, 2> data_; //!< Poles and residues
-
+  
+  //wmp capture
+  int wmp_version_major_;
+  int wmp_version_minor_;
+  
   // Constant data
   static constexpr int MAX_POLY_COEFFICIENTS =
     11; //!< Max order of polynomial fit plus one

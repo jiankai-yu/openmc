@@ -610,8 +610,8 @@ void Nuclide::calculate_xs(
   // Evaluate multipole or interpolate
   if (use_mp) {
     // Call multipole kernel
-    double sig_s, sig_a, sig_f, sig_c, sig_p, sig_l; // wmp evaluation
-    std::tie(sig_s, sig_a, sig_f, sig_c, sig_p, sig_l) = multipole_->evaluate(p.E(), p.sqrtkT());
+    double sig_s, sig_a, sig_c, sig_p, sig_l, sig_f; // wmp evaluation
+    std::tie(sig_s, sig_a, sig_c, sig_p, sig_l, sig_f) = multipole_->evaluate(p.E(), p.sqrtkT());
 
     micro.total = sig_s + sig_a;
     micro.elastic = sig_s;

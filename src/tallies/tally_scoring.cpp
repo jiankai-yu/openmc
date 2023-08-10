@@ -516,7 +516,15 @@ double get_nuclide_xs(const Particle& p, int i_nuclide, int score_bin)
     return xs;
   } else {
     // For multipole, calculate (n,gamma) from other reactions
-    return rx.mt_ == N_GAMMA ? micro.absorption - micro.fission : 0.0;
+    // return rx.mt_ == N_GAMMA ? micro.absorption - micro.fission : 0.0;
+        double xs {0.0};
+        switch (rx.mt_){
+          case N_GAMMA: xs = micro.capture; break;
+          case N_P: xs = micro.proton; break;
+          case N_A: xs = micro.alpha; break;
+          default: 0.0;
+        }
+        return xs;
   }
   return 0.0;
 }

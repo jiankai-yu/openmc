@@ -21,12 +21,18 @@ namespace openmc {
 constexpr int MP_EA {0}; // Pole
 constexpr int MP_RS {1}; // Residue scattering
 constexpr int MP_RA {2}; // Residue absorption
-constexpr int MP_RF {3}; // Residue fission
+constexpr int MP_RC {3}; // Residue capture
+constexpr int MP_RP {4}; // Residue proton
+constexpr int MP_RL {5}; // Residue alpha
+constexpr int MP_RF {6}; // Residue fission
 
 // Polynomial fit indices
 constexpr int FIT_S {0}; // Scattering
 constexpr int FIT_A {1}; // Absorption
-constexpr int FIT_F {2}; // Fission
+constexpr int FIT_C {2}; // Capture
+constexpr int FIT_P {3}; // Proton
+constexpr int FIT_L {4}; // Alpha
+constexpr int FIT_F {5}; // Fission
 
 // Multipole HDF5 file version
 constexpr array<int, 2> WMP_VERSION {1, 1};
@@ -56,7 +62,7 @@ public:
   //! \param sqrtkT Square root of temperature times Boltzmann constant
   //! \return Tuple of elastic scattering, absorption, and fission cross
   //! sections in [b]
-  std::tuple<double, double, double> evaluate(double E, double sqrtkT) const;
+  std::tuple<double, double, double, double, double, double> evaluate(double E, double sqrtkT) const;
 
   //! \brief Evaluates the windowed multipole equations for the derivative of
   //! cross sections in the resolved resonance regions with respect to
@@ -66,7 +72,7 @@ public:
   //! \param sqrtkT Square root of temperature times Boltzmann constant
   //! \return Tuple of derivatives of elastic scattering, absorption, and
   //!         fission cross sections in [b/K]
-  std::tuple<double, double, double> evaluate_deriv(
+  std::tuple<double, double, double, double, double, double> evaluate_deriv(
     double E, double sqrtkT) const;
 
   // Data members
@@ -81,6 +87,10 @@ public:
   xt::xtensor<double, 3>
     curvefit_; // Curve fit coefficients (window, poly order, reaction)
   xt::xtensor<std::complex<double>, 2> data_; //!< Poles and residues
+
+  // wmp minor version
+  int wmp_version_major_;
+  int wmp_version_minor_;
 
   // Constant data
   static constexpr int MAX_POLY_COEFFICIENTS =

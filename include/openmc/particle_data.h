@@ -108,6 +108,9 @@ struct NuclideMicroXS {
   double absorption; //!< absorption (disappearance)
   double fission;    //!< fission
   double nu_fission; //!< neutron production from fission
+  double capture;    //! capture for wmp based multipole
+  double proton;     //! proton for wmp based multipole
+  double alpha;      //! alpha for wmp based multipole
 
   double elastic;         //!< If sab_frac is not 1 or 0, then this value is
                           //!<   averaged over bound and non-bound nuclei

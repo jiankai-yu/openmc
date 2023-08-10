@@ -610,8 +610,8 @@ void Nuclide::calculate_xs(
   // Evaluate multipole or interpolate
   if (use_mp) {
     // Call multipole kernel
-    double sig_s, sig_a, sig_f;
-    std::tie(sig_s, sig_a, sig_f) = multipole_->evaluate(p.E(), p.sqrtkT());
+    double sig_s, sig_a, sig_f, sig_c, sig_p, sig_l; // wmp evaluation
+    std::tie(sig_s, sig_a, sig_f, sig_c, sig_p, sig_l) = multipole_->evaluate(p.E(), p.sqrtkT());
 
     micro.total = sig_s + sig_a;
     micro.elastic = sig_s;
@@ -619,13 +619,21 @@ void Nuclide::calculate_xs(
     micro.fission = sig_f;
     micro.nu_fission =
       fissionable_ ? sig_f * this->nu(p.E(), EmissionMode::total) : 0.0;
+    // wmp evaluation
+    micro.capture = sig_c; 
+    micro.proton = sig_p;
+    micro.alpha = sig_l;
 
     if (simulation::need_depletion_rx) {
       // Only non-zero reaction is (n,gamma)
-      micro.reaction[0] = sig_a - sig_f;
+      // micro.reaction[0] = sig_a - sig_f;
+      // wmp 
+      micro.reaction[0] = sig_c;
+      micro.reaction[1] = sig_p;
+      micro.reaction[2] = sig_l;
 
       // Set all other reaction cross sections to zero
-      for (int i = 1; i < DEPLETION_RX.size(); ++i) {
+      for (int i = 3; i < DEPLETION_RX.size(); ++i) { // wmp
         micro.reaction[i] = 0.0;
       }
     }
@@ -727,6 +735,8 @@ void Nuclide::calculate_xs(
     // Calculate microscopic nuclide absorption cross section
     micro.absorption =
       (1.0 - f) * xs(i_grid, XS_ABSORPTION) + f * xs(i_grid + 1, XS_ABSORPTION);
+
+    micro.capture = 0.0; // only used in wmp based mutlipole
 
     if (fissionable_) {
       // Calculate microscopic nuclide total cross section

@@ -217,6 +217,7 @@ std::tuple<double, double, double, double, double, double> WindowedMultipole::ev
   } else {
     // At temperature, use Faddeeva function-based form.
     double dopp = sqrt_awr_ / sqrtkT;
+#pragma omp
     for (int i_pole = window.index_start; i_pole <= window.index_end;
          ++i_pole) {
       std::complex<double> z = (sqrtE - data_(i_pole, MP_EA)) * dopp;

@@ -317,6 +317,7 @@ void print_build_info()
   std::string coverage(n);
   std::string mcpl(n);
   std::string ncrystal(n);
+  std::string faddeeva(n);
 
 #ifdef PHDF5
   phdf5 = y;
@@ -335,6 +336,9 @@ void print_build_info()
 #endif
 #ifdef NCRYSTAL
   ncrystal = y;
+#endif
+#ifdef FADDEEVA
+  faddeeva = y;
 #endif
 #ifdef USE_LIBPNG
   png = y;
@@ -361,6 +365,7 @@ void print_build_info()
     fmt::print("libMesh support:       {}\n", libmesh);
     fmt::print("MCPL support:          {}\n", mcpl);
     fmt::print("NCrystal support:      {}\n", ncrystal);
+    fmt::print("MIT Faddeeva support:  {}\n", faddeeva);
     fmt::print("Coverage testing:      {}\n", coverage);
     fmt::print("Profiling flags:       {}\n", profiling);
   }

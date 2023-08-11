@@ -39,6 +39,7 @@ option(OPENMC_USE_LIBMESH     "Enable support for libMesh unstructured mesh tall
 option(OPENMC_USE_MPI         "Enable MPI"                                           OFF)
 option(OPENMC_USE_MCPL        "Enable MCPL"                                          OFF)
 option(OPENMC_USE_NCRYSTAL    "Enable support for NCrystal scattering"               OFF)
+option(OPENMC_USE_FADDEEVA    "Enable default MIT Faddeeva function"                 ON)
 
 # Warnings for deprecated options
 foreach(OLD_OPT IN ITEMS "openmp" "profile" "coverage" "dagmc" "libmesh")
@@ -531,6 +532,10 @@ endif()
 if(OPENMC_USE_NCRYSTAL)
   target_compile_definitions(libopenmc PRIVATE NCRYSTAL)
   target_link_libraries(libopenmc NCrystal::NCrystal)
+endif()
+
+if (OPENMC_USE_FADDEEVA)
+  target_compile_definitions(libopenmc PRIVATE -DFADDEEVA)
 endif()
 
 #===============================================================================

@@ -59,6 +59,7 @@ from .error import *
 from .core import *
 from .nuclide import *
 from .material import *
+from .surface import *
 from .cell import *
 from .mesh import *
 from .filter import *

@@ -94,6 +94,13 @@ Surface::Surface(pugi::xml_node surf_node)
         surf_bc, id_));
     }
   }
+  
+  if (check_for_node(surf_node, "type")){
+    std::string surf_type = get_node_value(surf_node, "type", true, true);
+    type_ = surf_type;
+  } else {
+    fatal_error("Must specify type of surface in geometry XML file.");
+  }
 }
 
 bool Surface::sense(Position r, Direction u) const
@@ -235,6 +242,26 @@ BoundingBox SurfaceXPlane::bounding_box(bool pos_side) const
   }
 }
 
+void SurfaceXPlane::set_coeff(int n, double coeff)
+{
+  if (n == 1) {
+    x0_ = coeff;
+  } else {
+    fatal_error(fmt::format("Incorrect coeff number \"{}\" specified "
+                              "on surface {}", n, id_));
+  }
+}
+
+double SurfaceXPlane::get_coeff(int n) const
+{
+  if (n == 1) {
+    return x0_;
+  } else {
+    fatal_error(fmt::format("Incorrect coeff number \"{}\" specified "
+                              "on surface {}", n, id_));
+  }
+}
+
 //==============================================================================
 // SurfaceYPlane implementation
 //==============================================================================
@@ -272,6 +299,26 @@ BoundingBox SurfaceYPlane::bounding_box(bool pos_side) const
     return {-INFTY, INFTY, y0_, INFTY, -INFTY, INFTY};
   } else {
     return {-INFTY, INFTY, -INFTY, y0_, -INFTY, INFTY};
+  }
+}
+
+void SurfaceYPlane::set_coeff(int n, double coeff)
+{
+  if (n == 1) {
+    y0_ = coeff;
+  } else {
+    fatal_error(fmt::format("Incorrect coeff number \"{}\" specified "
+                              "on surface {}", n, id_));
+  }
+}
+
+double SurfaceYPlane::get_coeff(int n) const
+{
+  if (n == 1) {
+    return y0_;
+  } else {
+    fatal_error(fmt::format("Incorrect coeff number \"{}\" specified "
+                              "on surface {}", n, id_));;
   }
 }
 
@@ -315,6 +362,25 @@ BoundingBox SurfaceZPlane::bounding_box(bool pos_side) const
   }
 }
 
+void SurfaceZPlane::set_coeff(int n, double coeff)
+{
+  if (n == 1) {
+    z0_ = coeff;
+  } else {
+    fatal_error(fmt::format("Incorrect coeff number \"{}\" specified "
+                              "on surface {}", n, id_));
+  }
+}
+
+double SurfaceZPlane::get_coeff(int n) const
+{
+  if (n == 1) {
+    return z0_;
+  } else {
+    fatal_error(fmt::format("Incorrect coeff number \"{}\" specified "
+                              "on surface {}", n, id_));
+  }
+}
 //==============================================================================
 // SurfacePlane implementation
 //==============================================================================
@@ -353,6 +419,34 @@ void SurfacePlane::to_hdf5_inner(hid_t group_id) const
   write_string(group_id, "type", "plane", false);
   array<double, 4> coeffs {{A_, B_, C_, D_}};
   write_dataset(group_id, "coefficients", coeffs);
+}
+
+void SurfacePlane::set_coeff(int n, double coeff)
+{
+  if (n == 1) {
+    A_ = coeff;
+  } else if (n == 2) {
+    B_ = coeff;
+  } else if (n == 3) {
+    C_ = coeff;
+  } else {
+    fatal_error(fmt::format("Incorrect coeff number \"{}\" specified "
+                              "on surface {}", n, id_));
+  }
+}
+
+double  SurfacePlane::get_coeff(int n) const
+{
+  if (n == 1) {
+    return A_;
+  } else if (n == 2) {
+    return B_;
+  } else if (n == 3) {
+    return C_;;
+  } else {
+    fatal_error(fmt::format("Incorrect coeff number \"{}\" specified "
+                              "on surface {}", n, id_));
+  }
 }
 
 //==============================================================================
@@ -476,6 +570,35 @@ BoundingBox SurfaceXCylinder::bounding_box(bool pos_side) const
     return {};
   }
 }
+
+void SurfaceXCylinder::set_coeff(int n, double coeff)
+{
+  if (n == 1) {
+    y0_ = coeff;
+  } else if (n == 2) {
+    z0_ = coeff;
+  } else if (n == 3) {
+    radius_ = coeff;
+  } else {
+    fatal_error(fmt::format("Incorrect coeff number \"{}\" specified "
+                              "on surface {}", n, id_));
+  }
+}
+
+double SurfaceXCylinder::get_coeff(int n) const
+{
+  if (n == 1) {
+    return y0_;
+  } else if (n == 2) {
+    return z0_;
+  } else if (n == 3) {
+    return radius_;
+  } else {
+    fatal_error(fmt::format("Incorrect coeff number \"{}\" specified "
+                              "on surface {}", n, id_));
+  }
+}
+
 //==============================================================================
 // SurfaceYCylinder implementation
 //==============================================================================
@@ -520,6 +643,34 @@ BoundingBox SurfaceYCylinder::bounding_box(bool pos_side) const
   }
 }
 
+void SurfaceYCylinder::set_coeff(int n, double coeff)
+{
+  if (n == 1) {
+    x0_ = coeff;
+  } else if (n == 2) {
+    z0_ = coeff;
+  } else if (n == 3) {
+    radius_ = coeff;
+  } else {
+    fatal_error(fmt::format("Incorrect coeff number \"{}\" specified "
+                              "on surface {}", n, id_));
+  }
+}
+
+double SurfaceYCylinder::get_coeff(int n) const
+{
+  if (n == 1) {
+    return x0_;
+  } else if (n == 2) {
+    return z0_;
+  } else if (n == 3) {
+    return radius_;
+  } else {
+    fatal_error(fmt::format("Incorrect coeff number \"{}\" specified "
+                              "on surface {}", n, id_));
+  }
+}
+
 //==============================================================================
 // SurfaceZCylinder implementation
 //==============================================================================
@@ -561,6 +712,34 @@ BoundingBox SurfaceZCylinder::bounding_box(bool pos_side) const
       INFTY};
   } else {
     return {};
+  }
+}
+
+void SurfaceZCylinder::set_coeff(int n, double coeff)
+{
+  if (n == 1) {
+    x0_ = coeff;
+  } else if (n == 2) {
+    y0_ = coeff;
+  } else if (n == 3) {
+    radius_ = coeff;
+  } else {
+    fatal_error(fmt::format("Incorrect coeff number \"{}\" specified "
+                              "on surface {}", n, id_));
+  }
+}
+
+double SurfaceZCylinder::get_coeff(int n) const
+{
+  if (n == 1) {
+    return x0_;
+  } else if (n == 2) {
+    return y0_;
+  } else if (n == 3) {
+    return radius_;
+  } else {
+    fatal_error(fmt::format("Incorrect coeff number \"{}\" specified "
+                              "on surface {}", n, id_));
   }
 }
 
@@ -639,6 +818,38 @@ BoundingBox SurfaceSphere::bounding_box(bool pos_side) const
       z0_ - radius_, z0_ + radius_};
   } else {
     return {};
+  }
+}
+
+void SurfaceSphere::set_coeff(int n, double coeff)
+{
+  if (n == 1) {
+    x0_ = coeff;
+  } else if (n == 2) {
+    y0_ = coeff;
+  } else if (n == 3) {
+    z0_ = coeff;
+  } else if (n == 4) {
+    radius_ = coeff;
+  }else {
+    fatal_error(fmt::format("Incorrect coeff number \"{}\" specified "
+                              "on surface {}", n, id_));
+  }
+}
+
+double SurfaceSphere::get_coeff(int n) const
+{
+  if (n == 1) {
+    return x0_;
+  } else if (n == 2) {
+    return y0_;
+  } else if (n == 3) {
+    return z0_;
+  } else if (n == 4) {
+    return radius_;
+  }else {
+    fatal_error(fmt::format("Incorrect coeff number \"{}\" specified "
+                              "on surface {}", n, id_));
   }
 }
 
@@ -762,6 +973,38 @@ void SurfaceXCone::to_hdf5_inner(hid_t group_id) const
   write_dataset(group_id, "coefficients", coeffs);
 }
 
+void SurfaceXCone::set_coeff(int n, double coeff)
+{
+  if (n == 1) {
+    x0_ = coeff;
+  } else if (n == 2) {
+    y0_ = coeff;
+  } else if (n == 3) {
+    z0_ = coeff;
+  } else if (n == 4) {
+    radius_sq_ = coeff;
+  }else {
+    fatal_error(fmt::format("Incorrect coeff number \"{}\" specified "
+                              "on surface {}", n, id_));
+  }
+}
+
+double SurfaceXCone::get_coeff(int n) const
+{
+  if (n == 1) {
+    return x0_;
+  } else if (n == 2) {
+    return y0_;
+  } else if (n == 3) {
+    return z0_;
+  } else if (n == 4) {
+    return radius_sq_;
+  }else {
+    fatal_error(fmt::format("Incorrect coeff number \"{}\" specified "
+                              "on surface {}", n, id_));
+  }
+}
+
 //==============================================================================
 // SurfaceYCone implementation
 //==============================================================================
@@ -794,6 +1037,38 @@ void SurfaceYCone::to_hdf5_inner(hid_t group_id) const
   write_dataset(group_id, "coefficients", coeffs);
 }
 
+void SurfaceYCone::set_coeff(int n, double coeff)
+{
+  if (n == 1) {
+    x0_ = coeff;
+  } else if (n == 2) {
+    y0_ = coeff;
+  } else if (n == 3) {
+    z0_ = coeff;
+  } else if (n == 4) {
+    radius_sq_ = coeff;
+  }else {
+    fatal_error(fmt::format("Incorrect coeff number \"{}\" specified "
+                              "on surface {}", n, id_));
+  }
+}
+
+double SurfaceYCone::get_coeff(int n) const
+{
+  if (n == 1) {
+    return x0_;
+  } else if (n == 2) {
+    return y0_;
+  } else if (n == 3) {
+    return z0_;
+  } else if (n == 4) {
+    return radius_sq_;
+  }else {
+    fatal_error(fmt::format("Incorrect coeff number \"{}\" specified "
+                              "on surface {}", n, id_));
+  }
+}
+
 //==============================================================================
 // SurfaceZCone implementation
 //==============================================================================
@@ -824,6 +1099,38 @@ void SurfaceZCone::to_hdf5_inner(hid_t group_id) const
   write_string(group_id, "type", "z-cone", false);
   array<double, 4> coeffs {{x0_, y0_, z0_, radius_sq_}};
   write_dataset(group_id, "coefficients", coeffs);
+}
+
+void SurfaceZCone::set_coeff(int n, double coeff)
+{
+  if (n == 1) {
+    x0_ = coeff;
+  } else if (n == 2) {
+    y0_ = coeff;
+  } else if (n == 3) {
+    z0_ = coeff;
+  } else if (n == 4) {
+    radius_sq_ = coeff;
+  }else {
+    fatal_error(fmt::format("Incorrect coeff number \"{}\" specified "
+                              "on surface {}", n, id_));
+  }
+}
+
+double SurfaceZCone::get_coeff(int n) const
+{
+  if (n == 1) {
+    return x0_;
+  } else if (n == 2) {
+    return y0_;
+  } else if (n == 3) {
+    return z0_;
+  } else if (n == 4) {
+    return radius_sq_;
+  }else {
+    fatal_error(fmt::format("Incorrect coeff number \"{}\" specified "
+                              "on surface {}", n, id_));
+  }
 }
 
 //==============================================================================
@@ -930,6 +1237,62 @@ void SurfaceQuadric::to_hdf5_inner(hid_t group_id) const
   write_string(group_id, "type", "quadric", false);
   array<double, 10> coeffs {{A_, B_, C_, D_, E_, F_, G_, H_, J_, K_}};
   write_dataset(group_id, "coefficients", coeffs);
+}
+
+void SurfaceQuadric::set_coeff(int n, double coeff)
+{
+  if (n == 1) {
+    A_ = coeff;
+  } else if (n == 2) {
+    B_ = coeff;
+  } else if (n == 3) {
+    C_ = coeff;
+  } else if (n == 4) {
+    D_ = coeff;
+  } else if (n == 5) {
+    E_ = coeff;
+  } else if (n == 6) {
+    F_ = coeff;
+  } else if (n == 7) {
+    G_ = coeff;
+  } else if (n == 8) {
+    H_ = coeff;
+  } else if (n == 9) {
+    J_ = coeff;
+  } else if (n == 10) {
+    K_ = coeff;
+  } else {
+    fatal_error(fmt::format("Incorrect coeff number \"{}\" specified "
+                              "on surface {}", n, id_));
+  }
+}
+
+double SurfaceQuadric::get_coeff(int n) const
+{
+  if (n == 1) {
+    return A_;
+  } else if (n == 2) {
+    return B_;
+  } else if (n == 3) {
+    return C_;
+  } else if (n == 4) {
+    return D_;
+  } else if (n == 5) {
+    return E_;
+  } else if (n == 6) {
+    return F_;
+  } else if (n == 7) {
+    return G_;
+  } else if (n == 8) {
+    return H_;
+  } else if (n == 9) {
+    return J_;
+  } else if (n == 10) {
+    return K_;
+  } else {
+    fatal_error(fmt::format("Incorrect coeff number \"{}\" specified "
+                              "on surface {}", n, id_));
+  }
 }
 
 //==============================================================================
@@ -1039,6 +1402,46 @@ Direction SurfaceXTorus::normal(Position r) const
   return n / n.norm();
 }
 
+void SurfaceXTorus::set_coeff(int n, double coeff)
+{
+  if (n == 1) {
+    x0_ = coeff;
+  } else if (n == 2) {
+    y0_ = coeff;
+  } else if (n == 3) {
+    z0_ = coeff;
+  } else if (n == 4) {
+    A_ = coeff;
+  } else if (n == 5) {
+    B_ = coeff;
+  } else if (n == 6) {
+    C_ = coeff;
+  } else {
+    fatal_error(fmt::format("Incorrect coeff number \"{}\" specified "
+                              "on surface {}", n, id_));
+  }
+}
+
+double SurfaceXTorus::get_coeff(int n) const
+{
+  if (n == 1) {
+    return x0_;
+  } else if (n == 2) {
+    return y0_;
+  } else if (n == 3) {
+    return z0_;
+  } else if (n == 4) {
+    return A_;
+  } else if (n == 5) {
+    return B_;
+  } else if (n == 6) {
+    return C_;
+  } else {
+    fatal_error(fmt::format("Incorrect coeff number \"{}\" specified "
+                              "on surface {}", n, id_));
+  }
+}
+
 //==============================================================================
 // SurfaceYTorus implementation
 //==============================================================================
@@ -1092,6 +1495,46 @@ Direction SurfaceYTorus::normal(Position r) const
   return n / n.norm();
 }
 
+void SurfaceYTorus::set_coeff(int n, double coeff)
+{
+  if (n == 1) {
+    x0_ = coeff;
+  } else if (n == 2) {
+    y0_ = coeff;
+  } else if (n == 3) {
+    z0_ = coeff;
+  } else if (n == 4) {
+    A_ = coeff;
+  } else if (n == 5) {
+    B_ = coeff;
+  } else if (n == 6) {
+    C_ = coeff;
+  } else {
+    fatal_error(fmt::format("Incorrect coeff number \"{}\" specified "
+                              "on surface {}", n, id_));
+  }
+}
+
+double SurfaceYTorus::get_coeff(int n) const
+{
+  if (n == 1) {
+    return x0_;
+  } else if (n == 2) {
+    return y0_;
+  } else if (n == 3) {
+    return z0_;
+  } else if (n == 4) {
+    return A_;
+  } else if (n == 5) {
+    return B_;
+  } else if (n == 6) {
+    return C_;
+  } else {
+    fatal_error(fmt::format("Incorrect coeff number \"{}\" specified "
+                              "on surface {}", n, id_));
+  }
+}
+
 //==============================================================================
 // SurfaceZTorus implementation
 //==============================================================================
@@ -1143,6 +1586,46 @@ Direction SurfaceZTorus::normal(Position r) const
   double nz = C_ * C_ * g * z;
   Position n(nx, ny, nz);
   return n / n.norm();
+}
+
+void SurfaceZTorus::set_coeff(int n, double coeff)
+{
+  if (n == 1) {
+    x0_ = coeff;
+  } else if (n == 2) {
+    y0_ = coeff;
+  } else if (n == 3) {
+    z0_ = coeff;
+  } else if (n == 4) {
+    A_ = coeff;
+  } else if (n == 5) {
+    B_ = coeff;
+  } else if (n == 6) {
+    C_ = coeff;
+  } else {
+    fatal_error(fmt::format("Incorrect coeff number \"{}\" specified "
+                              "on surface {}", n, id_));
+  }
+}
+
+double SurfaceZTorus::get_coeff(int n) const
+{
+  if (n == 1) {
+    return x0_;
+  } else if (n == 2) {
+    return y0_;
+  } else if (n == 3) {
+    return z0_;
+  } else if (n == 4) {
+    return A_;
+  } else if (n == 5) {
+    return B_;
+  } else if (n == 6) {
+    return C_;
+  } else {
+    fatal_error(fmt::format("Incorrect coeff number \"{}\" specified "
+                              "on surface {}", n, id_));
+  }
 }
 
 //==============================================================================
@@ -1311,10 +1794,181 @@ void read_surfaces(pugi::xml_node node)
   }
 }
 
+void Surface::set_id(int32_t id)
+{
+  Expects(id >= 0 || id == C_NONE);
+
+  // Clear entry in surface map if an ID was already assigned before
+  if (id_ != C_NONE) {
+    model::surface_map.erase(id_);
+    id_ = C_NONE;
+  }
+
+  // Make sure no other surface has same ID
+  if (model::surface_map.find(id) != model::surface_map.end()) {
+    throw std::runtime_error {
+      "Two surfaces have the same ID: " + std::to_string(id)};
+  }
+
+  // If no ID specified, auto-assign next ID in sequence
+  if (id == C_NONE) {
+    id = 0;
+    for (const auto& m : model::surfaces) {
+      id = std::max(id, m->id_);
+    }
+    ++id;
+  }
+
+  // Update ID and entry in surface map
+  id_ = id;
+  model::surface_map[id] = index_;
+}
+
 void free_memory_surfaces()
 {
   model::surfaces.clear();
   model::surface_map.clear();
 }
+
+//==============================================================================
+// C API
+//==============================================================================
+
+extern "C" int openmc_get_surface_index(int32_t id, int32_t* index)
+{
+  auto it = model::surface_map.find(id);
+  if (it == model::surface_map.end()) {
+    set_errmsg("No surface exists with ID=" + std::to_string(id) + ".");
+    return OPENMC_E_INVALID_ID;
+  } else {
+    *index = it->second;
+    return 0;
+  }
+}
+
+extern "C" int openmc_surface_get_id(int32_t index, int32_t* id)
+{
+  if (index >= 0 && index < model::surfaces.size()) {
+    *id = model::surfaces[index]->id();
+    return 0;
+  } else {
+    set_errmsg("Index in surfaces array is out of bounds.");
+    return OPENMC_E_OUT_OF_BOUNDS;
+  }
+}
+
+extern "C" int openmc_surface_set_id(int32_t index, int32_t id)
+{
+  if (index >= 0 && index < model::surfaces.size()) {
+    try {
+      model::surfaces.at(index)->set_id(id);
+    } catch (const std::exception& e) {
+      set_errmsg(e.what());
+      return OPENMC_E_UNASSIGNED;
+    }
+  } else {
+    set_errmsg("Index in surfaces array is out of bounds.");
+    return OPENMC_E_OUT_OF_BOUNDS;
+  }
+  return 0;
+}
+
+extern "C" int openmc_surface_get_name(int32_t index, const char** name)
+{
+  if (index < 0 || index >= model::surfaces.size()) {
+    set_errmsg("Index in surfaces array is out of bounds.");
+    return OPENMC_E_OUT_OF_BOUNDS;
+  }
+
+  *name = model::surfaces[index]->name().data();
+
+  return 0;
+}
+
+extern "C" int openmc_surface_set_name(int32_t index, const char* name)
+{
+  if (index < 0 || index >= model::surfaces.size()) {
+    set_errmsg("Index in surfaces array is out of bounds.");
+    return OPENMC_E_OUT_OF_BOUNDS;
+  }
+
+  model::surfaces[index]->set_name(name);
+
+  return 0;
+}
+
+extern "C" int openmc_surface_get_type(int32_t index, const char** type)
+{
+  if (index < 0 || index >= model::surfaces.size()) {
+    set_errmsg("Index in surfaces array is out of bounds.");
+    return OPENMC_E_OUT_OF_BOUNDS;
+  }
+
+  *type = model::surfaces[index]->type().data();
+
+  return 0;
+}
+
+extern "C" int openmc_surface_set_type(int32_t index, const char* type)
+{
+  if (index < 0 || index >= model::surfaces.size()) {
+    set_errmsg("Index in surfaces array is out of bounds.");
+    return OPENMC_E_OUT_OF_BOUNDS;
+  }
+
+  model::surfaces[index]->set_type(type);
+
+  return 0;
+}
+
+extern "C" int openmc_surface_get_coeff(
+  int32_t index, int n, double* coeff)
+{
+  if (index >= 0 && index < model::surfaces.size()) {
+    auto& surf = model::surfaces[index];
+    *coeff = surf->get_coeff(n);
+    return 0;
+  } else {
+    set_errmsg("Index in surfaces array is out of bounds.");
+    return OPENMC_E_OUT_OF_BOUNDS;
+  }
+}
+
+extern "C" int openmc_surface_set_coeff(
+  int32_t index, int n, const double coeff)
+{
+  if (index >= 0 && index < model::surfaces.size()) {
+    try {
+      model::surfaces[index]->set_coeff(n, coeff);
+    } catch (const std::exception& e) {
+      set_errmsg(e.what());
+      return OPENMC_E_UNASSIGNED;
+    }
+  } else {
+    set_errmsg("Index in surfaces array is out of bounds.");
+    return OPENMC_E_OUT_OF_BOUNDS;
+  }
+  return 0;
+}
+
+extern "C" int openmc_extend_surfaces(
+  int32_t n, int32_t* index_start, int32_t* index_end)
+{
+  if (index_start)
+    *index_start = model::surfaces.size();
+  if (index_end)
+    *index_end = model::surfaces.size() + n - 1;
+  for (int32_t i = 0; i < n; i++) {
+    // the default type of surface is ZPlane
+    model::surfaces.push_back(make_unique<SurfaceZPlane>());
+  }
+  return 0;
+}
+
+extern "C" size_t n_surfaces()
+{
+  return model::surfaces.size();
+}
+
 
 } // namespace openmc

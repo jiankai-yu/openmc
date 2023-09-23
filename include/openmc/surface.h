@@ -7,6 +7,7 @@
 
 #include "hdf5.h"
 #include "pugixml.hpp"
+#include <gsl/gsl-lite.hpp>
 
 #include "openmc/boundary_condition.h"
 #include "openmc/constants.h"
@@ -83,8 +84,9 @@ struct BoundingBox {
 
 class Surface {
 public:
-  int id_;                                          //!< Unique ID
+  int32_t id_;                                          //!< Unique ID
   std::string name_;                                //!< User-defined name
+  std::string type_;                                //!< Type of surface 
   std::shared_ptr<BoundaryCondition> bc_ {nullptr}; //!< Boundary condition
   GeometryType geom_type_;   //!< Geometry type indicator (CSG or DAGMC)
   bool surf_source_ {false}; //!< Activate source banking for the surface?
@@ -137,9 +139,40 @@ public:
 
   //! Get the BoundingBox for this surface.
   virtual BoundingBox bounding_box(bool /*pos_side*/) const { return {}; }
+  
+  //! Get name
+  //! \return Surface name
+  const std::string& name() const { return name_; }
+
+  //! Set name
+  void set_name(const std::string& name) { name_ = name; }
+  
+  //! Get ID of material
+  //! \return ID of material
+  int32_t id() const { return id_; }
+
+  //! Assign a unique ID to the material
+  //! \param[in] Unique ID to assign. A value of -1 indicates that an ID
+  //!   should be automatically assigned.
+  void set_id(int32_t id);
+  
+  //! Get type
+  //! \return Surface type
+  const std::string& type() const { return type_; }
+
+  //! Set type
+  void set_type(const std::string& type) { type_ = type; }
+  
+  //! Set n-th coefficient
+  virtual void set_coeff(int n, double coeff) = 0;
+  
+  //! Get n-th coefficient
+  virtual double get_coeff(int n) const = 0;
 
 protected:
   virtual void to_hdf5_inner(hid_t group_id) const = 0;
+  // Private data members
+  gsl::index index_;
 };
 
 class CSGSurface : public Surface {
@@ -156,12 +189,15 @@ public:
 
 class SurfaceXPlane : public CSGSurface {
 public:
+  SurfaceXPlane() {};
   explicit SurfaceXPlane(pugi::xml_node surf_node);
   double evaluate(Position r) const override;
   double distance(Position r, Direction u, bool coincident) const override;
   Direction normal(Position r) const override;
   void to_hdf5_inner(hid_t group_id) const override;
   BoundingBox bounding_box(bool pos_side) const override;
+  void set_coeff(int n, double coeff) override;
+  double get_coeff(int n) const override;
 
   double x0_;
 };
@@ -174,12 +210,15 @@ public:
 
 class SurfaceYPlane : public CSGSurface {
 public:
+  SurfaceYPlane() {};
   explicit SurfaceYPlane(pugi::xml_node surf_node);
   double evaluate(Position r) const override;
   double distance(Position r, Direction u, bool coincident) const override;
   Direction normal(Position r) const override;
   void to_hdf5_inner(hid_t group_id) const override;
   BoundingBox bounding_box(bool pos_side) const override;
+  void set_coeff(int n, double coeff) override;
+  double get_coeff(int n) const override;
 
   double y0_;
 };
@@ -192,12 +231,15 @@ public:
 
 class SurfaceZPlane : public CSGSurface {
 public:
+  SurfaceZPlane() {};
   explicit SurfaceZPlane(pugi::xml_node surf_node);
   double evaluate(Position r) const override;
   double distance(Position r, Direction u, bool coincident) const override;
   Direction normal(Position r) const override;
   void to_hdf5_inner(hid_t group_id) const override;
   BoundingBox bounding_box(bool pos_side) const override;
+  void set_coeff(int n, double coeff) override;
+  double get_coeff(int n) const override;
 
   double z0_;
 };
@@ -210,11 +252,14 @@ public:
 
 class SurfacePlane : public CSGSurface {
 public:
+  SurfacePlane() {};
   explicit SurfacePlane(pugi::xml_node surf_node);
   double evaluate(Position r) const override;
   double distance(Position r, Direction u, bool coincident) const override;
   Direction normal(Position r) const override;
   void to_hdf5_inner(hid_t group_id) const override;
+  void set_coeff(int n, double coeff) override;
+  double get_coeff(int n) const override;
 
   double A_, B_, C_, D_;
 };
@@ -228,12 +273,15 @@ public:
 
 class SurfaceXCylinder : public CSGSurface {
 public:
+  SurfaceXCylinder() {};
   explicit SurfaceXCylinder(pugi::xml_node surf_node);
   double evaluate(Position r) const override;
   double distance(Position r, Direction u, bool coincident) const override;
   Direction normal(Position r) const override;
   void to_hdf5_inner(hid_t group_id) const override;
   BoundingBox bounding_box(bool pos_side) const override;
+  void set_coeff(int n, double coeff) override;
+  double get_coeff(int n) const override;
 
   double y0_, z0_, radius_;
 };
@@ -247,12 +295,15 @@ public:
 
 class SurfaceYCylinder : public CSGSurface {
 public:
+  SurfaceYCylinder() {};
   explicit SurfaceYCylinder(pugi::xml_node surf_node);
   double evaluate(Position r) const override;
   double distance(Position r, Direction u, bool coincident) const override;
   Direction normal(Position r) const override;
   void to_hdf5_inner(hid_t group_id) const override;
   BoundingBox bounding_box(bool pos_side) const override;
+  void set_coeff(int n, double coeff) override;
+  double get_coeff(int n) const override;
 
   double x0_, z0_, radius_;
 };
@@ -266,12 +317,15 @@ public:
 
 class SurfaceZCylinder : public CSGSurface {
 public:
+  SurfaceZCylinder() {};
   explicit SurfaceZCylinder(pugi::xml_node surf_node);
   double evaluate(Position r) const override;
   double distance(Position r, Direction u, bool coincident) const override;
   Direction normal(Position r) const override;
   void to_hdf5_inner(hid_t group_id) const override;
   BoundingBox bounding_box(bool pos_side) const override;
+  void set_coeff(int n, double coeff) override;
+  double get_coeff(int n) const override;
 
   double x0_, y0_, radius_;
 };
@@ -285,12 +339,15 @@ public:
 
 class SurfaceSphere : public CSGSurface {
 public:
+  SurfaceSphere() {};
   explicit SurfaceSphere(pugi::xml_node surf_node);
   double evaluate(Position r) const override;
   double distance(Position r, Direction u, bool coincident) const override;
   Direction normal(Position r) const override;
   void to_hdf5_inner(hid_t group_id) const override;
   BoundingBox bounding_box(bool pos_side) const override;
+  void set_coeff(int n, double coeff) override;
+  double get_coeff(int n) const override;
 
   double x0_, y0_, z0_, radius_;
 };
@@ -304,11 +361,14 @@ public:
 
 class SurfaceXCone : public CSGSurface {
 public:
+  SurfaceXCone() {};
   explicit SurfaceXCone(pugi::xml_node surf_node);
   double evaluate(Position r) const override;
   double distance(Position r, Direction u, bool coincident) const override;
   Direction normal(Position r) const override;
   void to_hdf5_inner(hid_t group_id) const override;
+  void set_coeff(int n, double coeff) override;
+  double get_coeff(int n) const override;
 
   double x0_, y0_, z0_, radius_sq_;
 };
@@ -322,11 +382,14 @@ public:
 
 class SurfaceYCone : public CSGSurface {
 public:
+  SurfaceYCone() {};
   explicit SurfaceYCone(pugi::xml_node surf_node);
   double evaluate(Position r) const override;
   double distance(Position r, Direction u, bool coincident) const override;
   Direction normal(Position r) const override;
   void to_hdf5_inner(hid_t group_id) const override;
+  void set_coeff(int n, double coeff) override;
+  double get_coeff(int n) const override;
 
   double x0_, y0_, z0_, radius_sq_;
 };
@@ -340,11 +403,14 @@ public:
 
 class SurfaceZCone : public CSGSurface {
 public:
+  SurfaceZCone() {};
   explicit SurfaceZCone(pugi::xml_node surf_node);
   double evaluate(Position r) const override;
   double distance(Position r, Direction u, bool coincident) const override;
   Direction normal(Position r) const override;
   void to_hdf5_inner(hid_t group_id) const override;
+  void set_coeff(int n, double coeff) override;
+  double get_coeff(int n) const override;
 
   double x0_, y0_, z0_, radius_sq_;
 };
@@ -358,11 +424,14 @@ public:
 
 class SurfaceQuadric : public CSGSurface {
 public:
+  SurfaceQuadric() {};
   explicit SurfaceQuadric(pugi::xml_node surf_node);
   double evaluate(Position r) const override;
   double distance(Position r, Direction u, bool coincident) const override;
   Direction normal(Position r) const override;
   void to_hdf5_inner(hid_t group_id) const override;
+  void set_coeff(int n, double coeff) override;
+  double get_coeff(int n) const override;
 
   // Ax^2 + By^2 + Cz^2 + Dxy + Eyz + Fxz + Gx + Hy + Jz + K = 0
   double A_, B_, C_, D_, E_, F_, G_, H_, J_, K_;
@@ -376,11 +445,14 @@ public:
 
 class SurfaceXTorus : public CSGSurface {
 public:
+  SurfaceXTorus() {};
   explicit SurfaceXTorus(pugi::xml_node surf_node);
   double evaluate(Position r) const override;
   double distance(Position r, Direction u, bool coincident) const override;
   Direction normal(Position r) const override;
   void to_hdf5_inner(hid_t group_id) const override;
+  void set_coeff(int n, double coeff) override;
+  double get_coeff(int n) const override;
 
   double x0_, y0_, z0_, A_, B_, C_;
 };
@@ -393,11 +465,14 @@ public:
 
 class SurfaceYTorus : public CSGSurface {
 public:
+  SurfaceYTorus() {};
   explicit SurfaceYTorus(pugi::xml_node surf_node);
   double evaluate(Position r) const override;
   double distance(Position r, Direction u, bool coincident) const override;
   Direction normal(Position r) const override;
   void to_hdf5_inner(hid_t group_id) const override;
+  void set_coeff(int n, double coeff) override;
+  double get_coeff(int n) const override;
 
   double x0_, y0_, z0_, A_, B_, C_;
 };
@@ -410,11 +485,14 @@ public:
 
 class SurfaceZTorus : public CSGSurface {
 public:
+  SurfaceZTorus() {};
   explicit SurfaceZTorus(pugi::xml_node surf_node);
   double evaluate(Position r) const override;
   double distance(Position r, Direction u, bool coincident) const override;
   Direction normal(Position r) const override;
   void to_hdf5_inner(hid_t group_id) const override;
+  void set_coeff(int n, double coeff) override;
+  double get_coeff(int n) const override;
 
   double x0_, y0_, z0_, A_, B_, C_;
 };

@@ -38,7 +38,7 @@ _dll.openmc_surface_get_type.argtypes = [c_int32, POINTER(c_double)]
 _dll.openmc_surface_get_type.restype = c_int
 _dll.openmc_surface_get_type.errcheck = _error_handler
 #
-_dll.openmc_surface_set_id.argtypes = [c_int32, c_double, c_char_p]
+_dll.openmc_surface_set_id.argtypes = [c_int32, c_int32]
 _dll.openmc_surface_set_id.restype = c_int
 _dll.openmc_surface_set_id.errcheck = _error_handler
 #
@@ -126,13 +126,13 @@ class Surface(_FortranObjectWithID):
 
     @property
     def id(self):
-        mat_id = c_int32()
-        _dll.openmc_surface_get_id(self._index, mat_id)
-        return mat_id.value
+        surf_id = c_int32()
+        _dll.openmc_surface_get_id(self._index, surf_id)
+        return surf_id.value
 
     @id.setter
-    def id(self, mat_id):
-        _dll.openmc_surface_set_id(self._index, mat_id)
+    def id(self, surf_id):
+        _dll.openmc_surface_set_id(self._index, surf_id)
 
     @property
     def name(self):

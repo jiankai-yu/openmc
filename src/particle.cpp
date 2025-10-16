@@ -58,6 +58,21 @@ double Particle::speed() const
     case ParticleType::positron:
       mass = MASS_ELECTRON_EV;
       break;
+    case ParticleType::proton:
+      mass = MASS_PROTON_EV;
+      break;
+    case ParticleType::deuteron:
+      mass = MASS_DEUTERON_EV;
+      break;
+    case ParticleType::triton:
+      mass = MASS_TRITON_EV;
+      break;
+    case ParticleType::helium3:
+      mass = MASS_HELIUM3_EV;
+      break;
+    case ParticleType::alpha:
+      mass = MASS_ALPHA_EV;
+      break;
     }
     // Equivalent to C * sqrt(1-(m/(m+E))^2) without problem at E<<m:
     return C_LIGHT * std::sqrt(this->E() * (this->E() + 2 * mass)) /
@@ -233,6 +248,10 @@ void Particle::event_advance()
   // Sample a distance to collision
   if (type() == ParticleType::electron || type() == ParticleType::positron) {
     collision_distance() = material() == MATERIAL_VOID ? INFINITY : 0.0;
+  } else if (type() == ParticleType::proton || type() == ParticleType::deuteron||
+             type() == ParticleType::triton || type() == ParticleType::helium3 ||
+             type() == ParticleType::alpha){
+    collision_distance() = material() == MATERIAL_VOID ? INFINITY : 0.0;  // TBD jiankai
   } else if (macro_xs().total == 0.0) {
     collision_distance() = INFINITY;
   } else {
@@ -883,6 +902,16 @@ std::string particle_type_to_str(ParticleType type)
     return "electron";
   case ParticleType::positron:
     return "positron";
+  case ParticleType::proton:
+    return "proton";
+  case ParticleType::deuteron:
+    return "deuteron";
+  case ParticleType::triton:
+    return "triton";
+  case ParticleType::helium3:
+    return "helium3";
+  case ParticleType::alpha:
+    return "alpha";
   }
   UNREACHABLE();
 }
@@ -897,7 +926,17 @@ ParticleType str_to_particle_type(std::string str)
     return ParticleType::electron;
   } else if (str == "positron") {
     return ParticleType::positron;
-  } else {
+  } else if (str == "proton") {
+    return ParticleType::proton;
+  }else if (str == "deuteron") {
+    return ParticleType::deuteron;
+  }else if (str == "triton") {
+    return ParticleType::triton;
+  }else if (str == "helium3") {
+    return ParticleType::helium3;
+  }else if (str == "alpha") {
+    return ParticleType::alpha;
+  }else {
     throw std::invalid_argument {fmt::format("Invalid particle name: {}", str)};
   }
 }

@@ -31,7 +31,8 @@ constexpr double CACHE_INVALID {-1.0};
 // Aliases and type definitions
 
 //! Particle types
-enum class ParticleType { neutron, photon, electron, positron };
+enum class ParticleType { neutron, photon, electron, positron, 
+                          proton, deuteron, triton, helium3, alpha };
 
 //! Saved ("banked") state of a particle
 //! NOTE: This structure's MPI type is built in initialize_mpi() of

@@ -59,6 +59,7 @@ bool output_summary {true};
 bool output_tallies {true};
 bool particle_restart_run {false};
 bool photon_transport {false};
+bool charged_transport {false};
 bool reduce_tallies {true};
 bool res_scat_on {false};
 bool restart_run {false};
@@ -582,6 +583,16 @@ void read_settings_xml(pugi::xml_node root)
                   "multigroup mode");
     }
   }
+  
+  // Check for charged particle transport
+  if (check_for_node(root, "charged_transport")) {
+    charged_transport = get_node_value_bool(root, "charged_transport");
+
+    if (!run_CE && charged_transport) {
+      fatal_error("Charged particle transport is not currently supported in "
+                  "multigroup mode");
+    }
+  }
 
   // Number of bins for logarithmic grid
   if (check_for_node(root, "log_grid_bins")) {
@@ -1054,6 +1065,12 @@ void read_settings_xml(pugi::xml_node root)
     if (temperature_multipole && photon_transport) {
       fatal_error("Multipole data cannot currently be used in conjunction with "
                   "photon transport.");
+    }
+
+    // Multipole currently doesn't work with charged particle transport
+    if (temperature_multipole && charged_transport) {
+      fatal_error("Multipole data cannot currently be used in conjunction with "
+                  "charged particle transport.");
     }
   }
   if (check_for_node(root, "temperature_range")) {
